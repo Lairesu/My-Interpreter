@@ -19,7 +19,8 @@ const (
 	// Identifiers + literals
 	IDENT ="IDENT"	// User-defined identifiers (variables, function names, etc.)
 	INT   = "INT"  // Integer literals (e.g., 12345)
-
+	FLOAT = "FLOAT"
+	
 	// Operators
 	ASSIGN	 = "="
 	PLUS	 = "+"

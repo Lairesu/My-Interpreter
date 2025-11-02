@@ -147,6 +147,9 @@ func New(l *lexer.Lexer) *Parser {
 	// register LBRACE
 	p.registerPrefix(token.LBRACE, p.parseHashLiteral)
 
+	// register Float
+	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
+
 	// InfixPrefix
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -671,4 +674,19 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 	}
 
 	return hash
+}
+
+
+// parse the Float 
+func (p *Parser) parseFloatLiteral() ast.Expression {
+	lit := &ast.FloatLiteral{Token: p.curToken}
+
+	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as float", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
 }

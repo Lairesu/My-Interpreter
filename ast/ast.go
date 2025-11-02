@@ -488,3 +488,17 @@ func (hl *HashLiteral) String() string {
 
 	return out.String()
 }
+
+// ==========================
+//	FloatLiteral
+// ==========================
+
+// for float number
+type FloatLiteral struct {
+	Token token.Token
+	Value float64
+}
+
+func (fl *FloatLiteral) ExpressionNode() {}
+func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
+func (fl *FloatLiteral) String() string { return fl.Token.Literal }

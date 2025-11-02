@@ -2,7 +2,9 @@ package lexer
 
 import (
 	"MagicInterpreter/token"
+	"strings"
 )
+
 // lexer represents the state of the lexical analyzer (lexer)
 // Its job is to read through the input string character by character
 // and break it into a stream of tokens for the parser to consume
@@ -106,10 +108,16 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
+
+			//  adding the float as well
 		} else if isDigit(l.ch){
-			tok.Type = token.INT
-			tok.Literal = l.readNumber()
-			return tok
+			literal := l.readNumber()
+			tok.Literal = literal
+			if strings.Contains(literal, "."){
+				tok.Type = token.FLOAT
+			} else {
+				tok.Type = token.INT
+			}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
@@ -190,9 +198,25 @@ func (l *Lexer) skipWhitespace() {
 // point this function returns the substring representing the number.
 //
 // After calling readNumber, the lexer's position will point to the first character that is not part of the number.
-func (l *Lexer) readNumber() string {
+
+
+// func (l *Lexer) readNumber() string {
+// 	position := l.position
+// 	for isDigit(l.ch) {
+// 		l.readChar()
+// 	}
+// 	return l.input[position:l.position]
+// }
+
+// reading the float number , we check for dot and read char
+func ( l * Lexer) readNumber() string {
 	position := l.position
-	for isDigit(l.ch) {
+	hasDot := false
+
+	for isDigit(l.ch) || (l.ch == '.' && !hasDot) {
+		if l.ch == '.' {
+			hasDot = true
+		}
 		l.readChar()
 	}
 	return l.input[position:l.position]

@@ -49,6 +49,9 @@ const (
 
 	// HASH OBJ
 	HASH_OBJ = "HASH"
+
+	// FLOAT OBJ
+	FLOAT_OBJ = "FLOAT"
 )
 
 // -------------------------
@@ -248,3 +251,13 @@ func (h *Hash) Inspect() string {
 type Hashable interface {
 	HashKey() HashKey
 }
+
+// ========================
+//	FloatLiteral
+// ========================pe
+type Float struct {
+	Value float64
+}
+
+func (f *Float) Type() ObjectType { return FLOAT_OBJ }
+func (f *Float) Inspect() string { return fmt.Sprintf("%g", f.Value)}

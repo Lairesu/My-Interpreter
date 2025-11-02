@@ -1,9 +1,9 @@
 package evaluator
 
 import (
-	"fmt"
 	"MagicInterpreter/ast"
 	"MagicInterpreter/object"
+	"fmt"
 )
 
 // instead of creating new instance every time, we reference them instead
@@ -140,6 +140,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 
+	// FloatLiteral
+	case *ast.FloatLiteral:
+		return &object.Float{Value: node.Value}
 	}
 	return newError("unknown node type: %T", node)
 }
@@ -218,8 +221,23 @@ func evalInfixExpression(
 	left, right object.Object,
 ) object.Object {
 	switch {
+	// both  ints
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
+
+	// FLoat Number : both number are floats
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalFloatInfixExpression(operator, left, right)
+
+	// left side is float and other side is int
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
+		rightFloat := &object.Float{Value: float64(right.(*object.Integer).Value)}
+		return evalFloatInfixExpression(operator, left, rightFloat)
+
+	// left is int and right side is float
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ:
+		leftFloat := &object.Float{Value: float64(left.(*object.Integer).Value)}
+		return evalFloatInfixExpression(operator, leftFloat, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
@@ -331,7 +349,7 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 }
 
 // Error
-func newError(format string, a ...interface{}) *object.Error {
+func newError(format string, a ...interface{}) *object}.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
 }
 
@@ -505,4 +523,33 @@ func evalHashIndexExpression(hash, index object.Object) object.Object {
 		return NULL
 	}
 	return pair.Value
+}
+
+// FLoat evaluation Infix Expression
+
+func evalFloatInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.Float).Value
+	rightVal := right.(*object.Float).Value
+
+	switch operator {
+
+	case "+":
+		return &object.Float{Value: leftVal + rightVal}
+	case "-":
+		return &object.Float{Value: leftVal - rightVal}
+	case "*":
+		return &object.Float{Value: leftVal * rightVal}
+	case "/":
+		return &object.Float{Value: leftVal / rightVal}
+	case "<":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
 }
