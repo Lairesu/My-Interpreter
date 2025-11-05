@@ -63,6 +63,9 @@ const (
 
 	// For HASH
 	COLON = ":"
+
+	// comments
+	COMMENT = "//"
 )
 
 // Token represents a  single lexical token extracted from the source code.

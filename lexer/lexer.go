@@ -9,10 +9,10 @@ import (
 // Its job is to read through the input string character by character
 // and break it into a stream of tokens for the parser to consume
 type Lexer struct {
-	input			string  // the entire source code being tokenized
-	position		int  	// current position in input (points to current char)
-	readPosition	int	 	// current reading position in input (after current char)
-	ch 				byte 	// current char under examination
+	input        string // the entire source code being tokenized
+	position     int    // current position in input (points to current char)
+	readPosition int    // current reading position in input (after current char)
+	ch           byte   // current char under examination
 }
 
 // New creates and returns a new lexer instance for the given input string
@@ -28,19 +28,20 @@ func New(input string) *Lexer {
 // from the raw source code
 //
 // Behavior:
-//		- skips the whitespace characters
-//		- checks the current character (l.ch) and matches it against known
-//    	  single-character tokens like '=', '+', ';', '(', ')', '{', '}',etc.
-//		- checks for multi-character operators such as "==" and "!=" using peekChar()
-//		- for letters, calls readIdentifier() to read the full identifier and uses lookupIdent()
-//		  to determine if it is a keyword or a user-defined identifier
-//		- for digits, calls readNumber() to read the full integer literal
-//		- If a match is found, it creates a new token using newToken()
-//		- Advances the lexer's position to the next character using readChar()
-//		- returns an ILLEGAL token if the character ir unrecognized
-//		- returns an EOF token when the end of input is reach (If l.ch is 0(end of input), it returns EOF Token)
+//   - skips the whitespace characters
+//   - checks the current character (l.ch) and matches it against known
+//     single-character tokens like '=', '+', ';', '(', ')', '{', '}',etc.
+//   - checks for multi-character operators such as "==" and "!=" using peekChar()
+//   - for letters, calls readIdentifier() to read the full identifier and uses lookupIdent()
+//     to determine if it is a keyword or a user-defined identifier
+//   - for digits, calls readNumber() to read the full integer literal
+//   - If a match is found, it creates a new token using newToken()
+//   - Advances the lexer's position to the next character using readChar()
+//   - returns an ILLEGAL token if the character ir unrecognized
+//   - returns an EOF token when the end of input is reach (If l.ch is 0(end of input), it returns EOF Token)
 //
 // Returns:
+//
 //	-token.Token:a struct containing the Type(TokenType) and literal (string value)
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
@@ -48,8 +49,9 @@ func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
 	switch l.ch {
+	// ASSIGN and EQ
 	case '=':
-		if l.peekChar() =='='{
+		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
@@ -61,8 +63,9 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.PLUS, l.ch)
 	case '-':
 		tok = newToken(token.MINUS, l.ch)
+	// bang and NOT EQ
 	case '!':
-		if l.peekChar() == '='{
+		if l.peekChar() == '=' {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(l.ch)
@@ -70,8 +73,20 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.BANG, l.ch)
 		}
+	// comment and slash
 	case '/':
-		tok = newToken(token.SLASH, l.ch)
+		if l.peekChar() == '/' {
+			// advance  to second '/'
+			l.readChar()
+			// skip the entire line after this or EOF
+			for l.ch != '\n' && l.ch != 0 {
+				l.readChar()
+			}
+			l.readChar()
+			return l.NextToken()
+		} else {
+			tok = newToken(token.SLASH, l.ch)
+		}
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
@@ -99,7 +114,7 @@ func (l *Lexer) NextToken() token.Token {
 	case ']':
 		tok = newToken(token.RBRACKET, l.ch)
 	case ':':
-		tok = newToken(token.COLON, l.ch)	
+		tok = newToken(token.COLON, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -108,16 +123,16 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-
 			//  adding the float as well
-		} else if isDigit(l.ch){
+		} else if isDigit(l.ch) {
 			literal := l.readNumber()
 			tok.Literal = literal
-			if strings.Contains(literal, "."){
+			if strings.Contains(literal, ".") {
 				tok.Type = token.FLOAT
 			} else {
 				tok.Type = token.INT
 			}
+			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
@@ -129,11 +144,11 @@ func (l *Lexer) NextToken() token.Token {
 // newToken is a helper function that creates a new token struct
 //
 // Arguments
-//		- tokenType: the category/type of the token(e.g., ASSIGN, PLUS, SEMICOLON)
-//		- ch the actual character from the input (as a byte)
-// 
+//   - tokenType: the category/type of the token(e.g., ASSIGN, PLUS, SEMICOLON)
+//   - ch the actual character from the input (as a byte)
+//
 // Returns:
-//		- A token struct with the Type and literal fields populated
+//   - A token struct with the Type and literal fields populated
 func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
@@ -160,10 +175,10 @@ func (l *Lexer) readChar() {
 // After calling realIdentifier, the lexer's position will point to the first character that is not par of the identifier.
 func (l *Lexer) readIdentifier() string {
 	position := l.position
-	for isLetter(l.ch){
+	for isLetter(l.ch) {
 		l.readChar()
 	}
-	return  l.input[position:l.position]
+	return l.input[position:l.position]
 }
 
 // isLetter reports whether the given byte is a valid letter for identifiers
@@ -171,19 +186,20 @@ func (l *Lexer) readIdentifier() string {
 //   - lowercase letters ('a'..'z')
 //   - uppercase letters ('A'..'Z')
 //   - underscore ('_')
+//
 // This is used by the lexer to determine where identifiers start and end
 // If we want to add , we can add '!' and '?', and treated as letter like '_'
 func isLetter(ch byte) bool {
-	return  'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }
-
 
 // skipWhitespace makes the lexer ignore spaces, tabs, newlines, and carriage returns
 // It checks the following:
-//   ' '  = space
-//   '\t' = tab
-//   '\n' = newline
-//   '\r' = carriage return
+//
+//	' '  = space
+//	'\t' = tab
+//	'\n' = newline
+//	'\r' = carriage return
 //
 // In this MagicInterpreter, whitespace only acts as a separator between tokens
 func (l *Lexer) skipWhitespace() {
@@ -199,7 +215,6 @@ func (l *Lexer) skipWhitespace() {
 //
 // After calling readNumber, the lexer's position will point to the first character that is not part of the number.
 
-
 // func (l *Lexer) readNumber() string {
 // 	position := l.position
 // 	for isDigit(l.ch) {
@@ -209,7 +224,7 @@ func (l *Lexer) skipWhitespace() {
 // }
 
 // reading the float number , we check for dot and read char
-func ( l * Lexer) readNumber() string {
+func (l *Lexer) readNumber() string {
 	position := l.position
 	hasDot := false
 
@@ -226,9 +241,8 @@ func ( l * Lexer) readNumber() string {
 //
 // This helper is used by the lexer to determine if the current character belongs to a number.
 func isDigit(ch byte) bool {
-	return '0'<= ch && ch <= '9'
+	return '0' <= ch && ch <= '9'
 }
-
 
 // peekChar returns the next character in the input without advancing the lexer's positions
 //
@@ -244,8 +258,6 @@ func (l *Lexer) peekChar() byte {
 		return l.input[l.readPosition]
 	}
 }
-
-
 
 // readString
 func (l *Lexer) readString() string {
